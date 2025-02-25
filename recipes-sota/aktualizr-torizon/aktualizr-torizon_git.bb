@@ -7,14 +7,14 @@ SRC_URI[garagesign.md5sum] = "584cd16aa7824e34b593dae63796466b"
 SRC_URI[garagesign.sha256sum] = "c7d5fdceef3e815363e3aa398c38643ca213f9b7f66d50f55c76a66cb74565d2"
 
 SRC_URI = " \
-  gitsm://github.com/toradex/aktualizr.git;protocol=https;branch=toradex-master \
+  gitsm://github.com/cajun-rat/aktualizr.git;protocol=https;branch=feat/dbus \
   file://aktualizr-torizon.service \
   file://gateway.url \
   file://root.crt \
   https://tuf-cli-releases.ota.here.com/cli-${GARAGE_SIGN_PV}.tgz;unpack=0;name=garagesign \
 "
 
-SRCREV = "87071ebde32b5da474d6180e0bec330a5f92599a"
+SRCREV = "${AUTOREV}"
 SRCREV:use-head-next = "${AUTOREV}"
 
 S = "${WORKDIR}/git"
@@ -31,13 +31,15 @@ SYSTEMD_SERVICE:${PN} = "aktualizr-torizon.service"
 # For find_package(Git)
 OECMAKE_FIND_ROOT_PATH_MODE_PROGRAM = "BOTH"
 
-PACKAGECONFIG ?= "ostree ${@bb.utils.filter('SOTA_CLIENT_FEATURES', 'hsm serialcan ubootenv', d)}"
+PACKAGECONFIG ?= "ostree offline dbus ${@bb.utils.filter('SOTA_CLIENT_FEATURES', 'hsm serialcan ubootenv', d)}"
 PACKAGECONFIG[warning-as-error] = "-DWARNING_AS_ERROR=ON,-DWARNING_AS_ERROR=OFF,"
 PACKAGECONFIG[ostree] = "-DBUILD_OSTREE=ON,-DBUILD_OSTREE=OFF,ostree,"
+PACKAGECONFIG[offline] = "-DBUILD_OFFLINE_UPDATES=ON,-DBUILD_OFFLINE_UPDATES=OFF"
 PACKAGECONFIG[ubootenv] = ",,u-boot-fw-utils,u-boot-fw-utils"
 PACKAGECONFIG:remove:class-native = "ubootenv"
 PACKAGECONFIG:class-native = "sota-tools"
 PACKAGECONFIG[sota-tools] = "-DBUILD_SOTA_TOOLS=ON -DGARAGE_SIGN_ARCHIVE=${WORKDIR}/cli-${GARAGE_SIGN_PV}.tgz, -DBUILD_SOTA_TOOLS=OFF,glib-2.0,"
+PACKAGECONFIG[dbus] = "-DBUILD_DBUS=ON,-DBUILD_DBUS=OFF,systemd"
 
 PROVIDES += "aktualizr"
 RPROVIDES:${PN} += "aktualizr aktualizr-info aktualizr-shared-prov"
@@ -61,6 +63,7 @@ FILES:${PN} += " \
   ${libdir}/libaktualizr.so \
   ${systemd_unitdir}/system/aktualizr-torizon.service \
   ${sysconfdir}/sota/* \
+  ${datadir}/dbus-1/system.d \
   ${libdir}/sota/* \
   ${libdir}/sota/conf.d \
   ${libdir}/sota/conf.d/20-sota-device-cred.toml \
